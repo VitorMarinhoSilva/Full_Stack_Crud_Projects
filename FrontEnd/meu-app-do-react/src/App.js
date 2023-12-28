@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import Modal from 'react-modal';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { login, getProjetos, createProject, updateProject, deleteProject } from './apiService';
+import CredentialUser from './config/CredentialUser';
 
 const TabelaProjetos = () => {
-  const projetosIniciais = [
-    { id: 1, nome: 'Projeto 1', prioridade: 'Alta', dataCriacao: '2023-01-01' },
-    { id: 2, nome: 'Projeto 2', prioridade: 'Média', dataCriacao: '2023-02-01' },
-  ];
-
-  const [projetos, setProjetos] = useState([...projetosIniciais]);
-  const [projetosFiltrados, setProjetosFiltrados] = useState([...projetosIniciais]);
+  const [projetos, setProjetos] = useState([]);
+  const [projetosFiltrados, setProjetosFiltrados] = useState([]);
   const [nomeProjeto, setNomeProjeto] = useState('');
   const [prioridadeProjeto, setPrioridadeProjeto] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -17,17 +14,40 @@ const TabelaProjetos = () => {
   const [projetoEditando, setProjetoEditando] = useState(null);
 
   useEffect(() => {
-    const projetosSalvos = localStorage.getItem('projetos');
+    const fetchProjetos = async () => {
+      try {
+        // Fazer o login para obter o token
+        const token = await login(CredentialUser);
 
-    if (projetosSalvos) {
-      setProjetos(JSON.parse(projetosSalvos));
-      setProjetosFiltrados(JSON.parse(projetosSalvos));
-    }
+        // Obter projetos usando o token
+        const projetosData = await getProjetos(token);
+
+        // Ajuste para mapear as propriedades corretas
+        const projetosMapeados = projetosData.map(projeto => ({
+          id: projeto._id.$oid,  // Assumindo que o ID é uma string
+          nome: projeto.nomeDoProjeto,
+          prioridade: projeto.prioridade,
+          dataCriacao: new Date(projeto.dataDeCriacao).toISOString().slice(0, 10),
+        }));
+
+        setProjetos(projetosMapeados);
+        setProjetosFiltrados(projetosMapeados);
+      } catch (error) {
+        console.error('Erro ao obter projetos:', error.message);
+      }
+    };
+
+    fetchProjetos();
   }, []);
 
-  const handleDelete = (id) => {
-    setProjetos(projetos.filter((projeto) => projeto.id !== id));
-    setProjetosFiltrados(projetosFiltrados.filter((projeto) => projeto.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      await deleteProject(id);
+      setProjetos(projetos.filter((projeto) => projeto.id !== id));
+      setProjetosFiltrados(projetosFiltrados.filter((projeto) => projeto.id !== id));
+    } catch (error) {
+      console.error('Erro ao excluir projeto:', error.message);
+    }
   };
 
   const handleEdit = (projeto) => {
@@ -64,47 +84,57 @@ const TabelaProjetos = () => {
     setIsModalOpen(false);
   };
 
-  const handleAddProject = (e) => {
+  const handleAddProject = async (e) => {
     e.preventDefault();
-
-    const novoProjeto = {
-      id: projetos.length + 1,
-      nome: nomeProjeto,
-      prioridade: prioridadeProjeto,
-      dataCriacao: new Date().toISOString().slice(0, 10),
-    };
-
-    const novosProjetos = [...projetos, novoProjeto];
-
-    setProjetos(novosProjetos);
-    setProjetosFiltrados(novosProjetos);
-
-    localStorage.setItem('projetos', JSON.stringify(novosProjetos));
-
-    setNomeProjeto('');
-    setPrioridadeProjeto('');
-    setIsModalOpen(false);
-  };
-
-  const handleEditProject = (e) => {
-    e.preventDefault();
-
-    if (projetoEditando) {
-      const projetosAtualizados = projetos.map((projeto) =>
-        projeto.id === projetoEditando.id
-          ? { ...projeto, nome: nomeProjeto, prioridade: prioridadeProjeto }
-          : projeto
-      );
-
-      setProjetos(projetosAtualizados);
-      setProjetosFiltrados(projetosAtualizados);
-
+  
+    try {
+      const novoProjeto = {
+        nomeDoProjeto: nomeProjeto,
+        prioridade: prioridadeProjeto,
+        dataDeCriacao: new Date().toISOString(),
+      };
+  
+      const projetoAdicionado = await createProject(novoProjeto);
+  
+      setProjetos([...projetos, projetoAdicionado]);
+      setProjetosFiltrados([...projetos, projetoAdicionado]);
+  
       setNomeProjeto('');
       setPrioridadeProjeto('');
-      setProjetoEditando(null);
       setIsModalOpen(false);
+    } catch (error) {
+      console.error('Erro ao adicionar projeto:', error.message);
+    }
+  };
 
-      localStorage.setItem('projetos', JSON.stringify(projetosAtualizados));
+  const handleEditProject = async (e) => {
+    e.preventDefault();
+  
+    if (projetoEditando) {
+      try {
+        const projetoAtualizado = {
+          nomeDoProjeto: nomeProjeto,
+          prioridade: prioridadeProjeto,
+        };
+  
+        await updateProject(projetoEditando._id, projetoAtualizado);
+  
+        const projetosAtualizados = projetos.map((projeto) =>
+          projeto.id === projetoEditando._id
+            ? { ...projeto, nome: nomeProjeto, prioridade: prioridadeProjeto }
+            : projeto
+        );
+  
+        setProjetos(projetosAtualizados);
+        setProjetosFiltrados(projetosAtualizados);
+  
+        setNomeProjeto('');
+        setPrioridadeProjeto('');
+        setProjetoEditando(null);
+        setIsModalOpen(false);
+      } catch (error) {
+        console.error('Erro ao editar projeto:', error.message);
+      }
     }
   };
 
@@ -194,7 +224,7 @@ const TabelaProjetos = () => {
                 >
                   <option value="">Selecione</option>
                   <option value="Baixa">Baixa</option>
-                  <option value="Media">Média</option>
+                  <option value="Média">Média</option>
                   <option value="Alta">Alta</option>
                 </select>
               </div>
@@ -236,7 +266,7 @@ const TabelaProjetos = () => {
                 >
                   <option value="">Selecione</option>
                   <option value="Baixa">Baixa</option>
-                  <option value="Media">Média</option>
+                  <option value="Média">Média</option>
                   <option value="Alta">Alta</option>
                 </select>
               </div>
@@ -252,7 +282,6 @@ const TabelaProjetos = () => {
                   Cancelar
                 </button>
               </div>
-
             </form>
           </>
         )}
