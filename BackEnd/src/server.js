@@ -1,17 +1,42 @@
-//Express Server
+// server.js
 const express = require('express');
-const app = express();
 const cors = require('cors');
-const dotenv = require('dotenv');
+const { connectToDatabase } = require('../src/services/databaseService');
+const projectRoutes = require('../src/routes/projectRoutes');
+const { port } = require('../src/config/express');
+const authRoutes = require('../src/routes/authRoutes');
+const { authenticateToken } = require('../src/Middleware/authMiddleware'); // corrigido o caminho do middleware
 
-dotenv.config();
-const port = process.env.PORT;
+async function startServer() {
+  try {
+    // Aguarde a conclusão da conexão ao banco de dados antes de iniciar o servidor
+    await connectToDatabase();
 
-app.use(express.json()); // Habilita o uso de JSON no corpo das requisições
-app.get('/', (req, res) => {
-  res.status(200).send('API funcionando');;
-});
+    const app = express();
 
-app.listen(port, cors(), () => {
-  console.log(`Servidor rodando na porta ${port}`);
-});
+    app.use(express.json()); // Habilita o uso de JSON no corpo das requisições
+    app.use(cors());
+
+    // Adicione o middleware de autenticação globalmente para todas as rotas abaixo de /api
+    // app.use('/api', authenticateToken);
+
+    // Adicione as rotas do projeto
+    app.use('/api', projectRoutes);
+
+    // Adicione as rotas de autenticação
+    app.use('/api/auth', authRoutes);
+
+    app.get('/', (req, res) => {
+      res.status(200).send('API funcionando');
+    });
+
+    app.listen(port, () => {
+      console.log(`Servidor rodando na porta ${port}`);
+    });
+  } catch (error) {
+    console.error('Erro ao iniciar o servidor:', error.message);
+    process.exit(1);
+  }
+}
+
+startServer();
