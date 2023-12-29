@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const projectController = require('../controllers/projectController');
-// const { authenticateToken } = require('../Middleware/authMiddleware'); // Importe o middleware de autenticação
 
 // Rota para obter todos os projetos 
 router.get('/projects', projectController.getProjects);

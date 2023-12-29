@@ -1,11 +1,9 @@
-// server.js
 const express = require('express');
 const cors = require('cors');
 const { connectToDatabase } = require('../src/services/databaseService');
 const projectRoutes = require('../src/routes/projectRoutes');
 const { port } = require('../src/config/express');
 const authRoutes = require('../src/routes/authRoutes');
-const { authenticateToken } = require('../src/Middleware/authMiddleware'); // corrigido o caminho do middleware
 
 async function startServer() {
   try {
