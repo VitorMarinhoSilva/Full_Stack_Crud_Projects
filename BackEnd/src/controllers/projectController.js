@@ -20,6 +20,7 @@ function validateToken(req, res, next) {
   });
 }
 
+
 exports.getProjects = async (req, res) => {
   try {
     // Validar o token antes de executar a lógica da rota
@@ -123,13 +124,12 @@ exports.deleteProject = async (req, res) => {
       }
 
       // Remover o projeto do banco de dados
-      const deletedProject = await Project.findByIdAndRemove(projectId);
+      const deletedProject = await Project.findByIdAndDelete(projectId);
 
       // Verificar se o projeto foi removido com sucesso
       if (!deletedProject) {
         return res.status(404).json({ error: 'Projeto não encontrado.' });
       }
-
       res.status(200).json({ message: 'Projeto removido com sucesso.' });
     });
   } catch (error) {

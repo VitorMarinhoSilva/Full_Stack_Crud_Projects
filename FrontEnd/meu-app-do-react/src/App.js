@@ -24,7 +24,7 @@ const TabelaProjetos = () => {
 
         // Ajuste para mapear as propriedades corretas
         const projetosMapeados = projetosData.map(projeto => ({
-          id: projeto._id.$oid,  // Assumindo que o ID é uma string
+          id: projeto._id,  // Corrigindo para usar _id diretamente
           nome: projeto.nomeDoProjeto,
           prioridade: projeto.prioridade,
           dataCriacao: new Date(projeto.dataDeCriacao).toISOString().slice(0, 10),
@@ -37,18 +37,27 @@ const TabelaProjetos = () => {
       }
     };
 
-    fetchProjetos();
-  }, []);
+    fetchProjetos();  // Chama a função fetchProjetos
+  }, []);  // A dependência vazia garante que o useEffect seja executado apenas uma vez ao montar o componente
 
-  const handleDelete = async (id) => {
+
+
+
+  const handleDelete = async (_id) => {
+    console.log("Deleting project with id:", _id);
+  
     try {
-      await deleteProject(id);
-      setProjetos(projetos.filter((projeto) => projeto.id !== id));
-      setProjetosFiltrados(projetosFiltrados.filter((projeto) => projeto.id !== id));
+      // Chamar a função deleteProject passando o _id diretamente
+      await deleteProject(_id);
+  
+      // Atualizar o estado filtrando os projetos excluindo o projeto com o _id
+      setProjetos((projetos) => projetos.filter((projeto) => projeto._id !== _id));
+      setProjetosFiltrados((projetosFiltrados) => projetosFiltrados.filter((projeto) => projeto._id !== _id));
+      window.location.reload();
     } catch (error) {
       console.error('Erro ao excluir projeto:', error.message);
     }
-  };
+  };  
 
   const handleEdit = (projeto) => {
     setProjetoEditando(projeto);
@@ -86,22 +95,23 @@ const TabelaProjetos = () => {
 
   const handleAddProject = async (e) => {
     e.preventDefault();
-  
+
     try {
       const novoProjeto = {
         nomeDoProjeto: nomeProjeto,
         prioridade: prioridadeProjeto,
         dataDeCriacao: new Date().toISOString(),
       };
-  
+
       const projetoAdicionado = await createProject(novoProjeto);
-  
+
       setProjetos([...projetos, projetoAdicionado]);
       setProjetosFiltrados([...projetos, projetoAdicionado]);
-  
+
       setNomeProjeto('');
       setPrioridadeProjeto('');
       setIsModalOpen(false);
+      window.location.reload();
     } catch (error) {
       console.error('Erro ao adicionar projeto:', error.message);
     }
@@ -109,34 +119,42 @@ const TabelaProjetos = () => {
 
   const handleEditProject = async (e) => {
     e.preventDefault();
-  
+
     if (projetoEditando) {
       try {
         const projetoAtualizado = {
           nomeDoProjeto: nomeProjeto,
           prioridade: prioridadeProjeto,
         };
-  
-        await updateProject(projetoEditando._id, projetoAtualizado);
-  
+
+        projetoAtualizado._id = projetoEditando.id;
+
+        await updateProject(projetoAtualizado);
+
         const projetosAtualizados = projetos.map((projeto) =>
-          projeto.id === projetoEditando._id
+          projeto._id === projetoEditando.id
             ? { ...projeto, nome: nomeProjeto, prioridade: prioridadeProjeto }
             : projeto
         );
-  
+
         setProjetos(projetosAtualizados);
         setProjetosFiltrados(projetosAtualizados);
-  
+
         setNomeProjeto('');
         setPrioridadeProjeto('');
         setProjetoEditando(null);
         setIsModalOpen(false);
+
+        // Recarrega a página para refletir as alterações
+        window.location.reload();
       } catch (error) {
         console.error('Erro ao editar projeto:', error.message);
       }
     }
   };
+
+
+
 
   return (
     <div className="container mt-4">
@@ -169,7 +187,7 @@ const TabelaProjetos = () => {
         </thead>
         <tbody>
           {projetosFiltrados.map((projeto, index) => (
-            <tr key={projeto.id}>
+            <tr key={projeto._id}>
               <td>{index + 1}</td>
               <td>{projeto.nome}</td>
               <td>{projeto.prioridade}</td>
