@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const moment = require('moment');
 
 const projectSchema = new mongoose.Schema({
   nomeDoProjeto: {

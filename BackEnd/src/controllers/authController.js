@@ -1,11 +1,12 @@
 const jwt = require('jsonwebtoken');
 const { secret } = require('../config/auth');
+const {username, password} = require('../config/authUser');
 
 // Usuário mockado para exemplo
-const mockUser = {
-  username: 'VitorM',
-  password: '255452',
-};
+const mockUser= {
+  username,
+  password
+}
 
 function authenticateUser(req, res, next) {
   // Obtenha as credenciais do corpo da solicitação
