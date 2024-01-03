@@ -1,0 +1,20 @@
+# Use uma imagem base adequada (por exemplo, node:14)
+FROM node:latest
+
+# Defina o diretório de trabalho dentro do contêiner
+WORKDIR /app
+
+# Copie os arquivos necessários (package.json e package-lock.json) para o contêiner
+COPY package*.json ./
+
+# Instale as dependências
+RUN npm install
+
+# Copie todos os arquivos da aplicação para o contêiner
+COPY . .
+
+# Exponha a porta na qual a aplicação irá rodar (a mesma porta definida no package.json)
+EXPOSE 3000
+
+# Comando para iniciar a aplicação
+CMD ["npm", "start"]

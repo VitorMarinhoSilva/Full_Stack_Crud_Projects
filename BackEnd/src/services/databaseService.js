@@ -1,7 +1,8 @@
-// Connection to Database
 const mongoose = require('mongoose');
 const { url, options } = require('../config/database');
+const Project = require('../models/projectModel'); // Importe o modelo
 
+// Conectar ao banco de dados
 function connectToDatabase() {
   return new Promise((resolve, reject) => {
     mongoose.connect(url, options)
@@ -16,4 +17,4 @@ function connectToDatabase() {
   });
 }
 
-module.exports = { connectToDatabase };
+module.exports = { connectToDatabase, Project };
