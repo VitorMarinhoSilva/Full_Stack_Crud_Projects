@@ -1,0 +1,20 @@
+# Use uma imagem base adequada para a sua aplicação (por exemplo, node:14-alpine)
+FROM node:latest
+
+# Defina o diretório de trabalho
+WORKDIR /usr/src/app
+
+# Copie os arquivos necessários para o contêiner
+COPY package*.json ./
+COPY src ./src
+
+# Instale as dependências
+RUN npm install
+
+COPY src/config/database.js ./src/config/database.js
+
+# Exponha a porta que a aplicação estará ouvindo
+EXPOSE 3003
+
+# Comando para iniciar a aplicação em modo de produção
+CMD ["npm", "start"]
